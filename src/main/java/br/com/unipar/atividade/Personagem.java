@@ -7,7 +7,7 @@ public class Personagem {
     private String nomePersonagem;
     private double pontosVida = 100.00;
     private double armadura;
-    private double ultimate;
+    
     
     private Random random = new Random();
 
@@ -45,13 +45,7 @@ public class Personagem {
         this.armadura = armadura;
     }
 
-    public double getUltimate() {
-        return ultimate;
-    }
-
-    public void setUltimate(double ultimate) {
-        this.ultimate = ultimate;
-    }
+    
 
     // Métodos para nosso personagem
 
@@ -60,7 +54,7 @@ public class Personagem {
         int danoBruto = 10;
         double valorBonus = random.nextInt(1, 11) * 0.5;
         double danoTotal = danoBruto + valorBonus;
-        System.out.println(this.nomePersonagem + ": Atacou " + danoTotal + " com sucesso!");
+        System.out.println(this.nomePersonagem + ": Atacou " + danoTotal + " com sucesso!\n");
         return danoTotal;
     }
 
@@ -98,17 +92,13 @@ public class Personagem {
             pontosVida = 0.0;
         }
 
-        System.out.println(this.nomePersonagem + ": Recebeu " + danoMitigado + " de dano. Vida atual: " + pontosVida);
+        System.out.printf(this.nomePersonagem + ": Dano Recebido %.2f", danoMitigado);
+        System.out.println();
+        System.out.printf(this.nomePersonagem + ": Vida Restante: %.2f%n", this.pontosVida);
+        
         return pontosVida; 
     }
 
-    public void statusInicial (){
-        
-        System.out.printf("Armadura -> %.2f", this.armadura);
-        System.out.println();
-        System.out.printf("Vida ->     %.2f", this.pontosVida);
-        System.out.println();
-    }
+    
 }
-
 
