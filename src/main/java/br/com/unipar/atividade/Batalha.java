@@ -8,24 +8,9 @@ import java.util.Scanner;
  */
 public class Batalha {
 
-    /**
-     * Personagem controlado pelo jogador.
-     */
     private final Personagem jogador;
-
-    /**
-     * Personagem controlado automaticamente pelo sistema.
-     */
     private final Personagem inimigo;
-
-    /**
-     * Scanner usado para ler as escolhas do usuário.
-     */
     private final Scanner scanner;
-
-    /**
-     * Fonte aleatória da inteligência do sistema.
-     */
     private final Random random;
     private final IntervencaoMansao intervencaoMansao;
 
@@ -45,23 +30,54 @@ public class Batalha {
         exibirInicioDaBatalha();
 
         while (jogador.estaVivo() && inimigo.estaVivo()) {
+            registrarRodada();
             exibirCabecalhoDoTurno(turno);
             executarTurnoDoJogador();
-            exibirResumoDaAcaoDoJogador();
-            if (!inimigo.estaVivo()) {
-                exibirResumoDaRodada(turno);
+            if (algumCombatenteFoiDerrotado()) {
+                exibirTabelaDaRodada(turno);
                 break;
             }
 
             executarTurnoDoInimigo();
+            if (algumCombatenteFoiDerrotado()) {
+                exibirTabelaDaRodada(turno);
+                break;
+            }
+
             executarIntervencaoDaMansao();
-            exibirResumoDaRodada(turno);
-            jogador.prepararProximoTurno();
-            inimigo.prepararProximoTurno();
+            exibirTabelaDaRodada(turno);
+            if (algumCombatenteFoiDerrotado()) {
+                break;
+            }
+
+            prepararProximaRodada();
             turno++;
         }
 
         exibirResultadoFinal();
+    }
+
+    /**
+     * Marca que os dois lados participaram da rodada atual.
+     */
+    private void registrarRodada() {
+        jogador.registrarRodadaParticipada();
+        inimigo.registrarRodadaParticipada();
+    }
+
+    /**
+     * Confere se a luta deve encerrar imediatamente.
+     */
+    private boolean algumCombatenteFoiDerrotado() {
+        return !jogador.estaVivo() || !inimigo.estaVivo();
+    }
+
+    /**
+     * Renova recursos no fim da rodada quando ambos seguem vivos.
+     */
+    private void prepararProximaRodada() {
+        jogador.prepararProximoTurno();
+        inimigo.prepararProximoTurno();
     }
 
     /**
@@ -81,7 +97,7 @@ public class Batalha {
     }
 
     /**
-     * Exibe status resumido no começo de cada turno.
+     * Exibe um resumo inicial da rodada.
      */
     private void exibirCabecalhoDoTurno(int turno) {
         System.out.println("========================================");
@@ -94,7 +110,7 @@ public class Batalha {
     }
 
     /**
-     * Permite ao jogador escolher uma ação válida no menu.
+     * Executa o turno do jogador até uma ação válida consumir a rodada.
      */
     private void executarTurnoDoJogador() {
         boolean turnoConcluido = false;
@@ -107,7 +123,7 @@ public class Batalha {
     }
 
     /**
-     * Mostra o menu principal de ações do turno do jogador.
+     * Mostra o menu principal de ações do turno.
      */
     private void exibirMenuDeAcoes() {
         for (AcaoBatalha acao : AcaoBatalha.values()) {
@@ -116,7 +132,7 @@ public class Batalha {
     }
 
     /**
-     * Lê a ação do jogador com validação simples de entrada.
+     * Lê a ação do usuário com validação simples.
      */
     private AcaoBatalha lerAcaoDoJogador() {
         while (true) {
@@ -144,32 +160,7 @@ public class Batalha {
     }
 
     /**
-     * Executa a ação automática do inimigo com base no estado atual.
-     */
-    private void executarTurnoDoInimigo() {
-        AcaoBatalha acao = escolherAcaoInimiga();
-        System.out.println("O adversário se movimenta: " + inimigo.getNome() + ".");
-        processarAcao(inimigo, jogador, acao, false);
-    }
-
-    /**
-     * Seleciona a ação mais coerente para o inimigo controlado pelo sistema.
-     */
-    private AcaoBatalha escolherAcaoInimiga() {
-        if (inimigo.getVida() < 350 && inimigo.getMascote().podeAgir()) {
-            return AcaoBatalha.AJUDA_MASCOTE;
-        }
-        if (inimigo.getMana() >= 40 && random.nextBoolean()) {
-            return AcaoBatalha.HABILIDADE_ESPECIAL;
-        }
-        if (random.nextInt(100) < 25) {
-            return AcaoBatalha.DEFENDER;
-        }
-        return AcaoBatalha.ATACAR;
-    }
-
-    /**
-     * Direciona cada ação para um método menor e reutilizável.
+     * Executa a ação escolhida para um dos lados da batalha.
      */
     private boolean processarAcao(Personagem ator, Personagem alvo,
                                   AcaoBatalha acao, boolean permitirStatus) {
@@ -189,8 +180,12 @@ public class Batalha {
             executarHabilidadeEspecial(ator, alvo);
             return true;
         }
+        if (acao == AcaoBatalha.ATAQUE_CONJUNTO) {
+            executarAtaqueConjunto(ator, alvo);
+            return true;
+        }
 
-        executarAjudaDoMascote(ator, alvo, permitirStatus);
+        executarUsoExclusivoDoMascote(ator, alvo, permitirStatus);
         return true;
     }
 
@@ -206,17 +201,16 @@ public class Batalha {
     }
 
     /**
-     * Realiza o ataque básico e mostra o dano final causado.
+     * Executa o ataque básico do personagem.
      */
     private void executarAtaque(Personagem ator, Personagem alvo) {
-        int danoBruto = ator.atacar();
-        ResultadoDano resultado = alvo.receberDanoDetalhado(danoBruto);
+        ResultadoDano resultado = ator.executarAtaqueBasico(alvo);
         System.out.println(ator.getNome() + " avançou e atacou " + alvo.getNome() + ".");
         exibirDetalhesDoDano(alvo, resultado);
     }
 
     /**
-     * Ativa a defesa do personagem para o próximo impacto.
+     * Ativa a postura defensiva do personagem.
      */
     private void executarDefesa(Personagem ator) {
         ator.defender();
@@ -249,10 +243,31 @@ public class Batalha {
     }
 
     /**
-     * Aciona o mascote para dar suporte ou atacar.
+     * Executa um ataque em conjunto entre personagem e mascote.
      */
-    private void executarAjudaDoMascote(Personagem ator, Personagem alvo,
-                                        boolean escolhaDoJogador) {
+    private void executarAtaqueConjunto(Personagem ator, Personagem alvo) {
+        ResultadoAtaqueConjunto resultado = ator.atacarComMascote(alvo);
+        System.out.println(ator.getNome() + " iniciou uma investida conjunta.");
+        System.out.println("Impacto do personagem:");
+        exibirDetalhesDoDano(alvo, resultado.getResultadoPersonagem());
+        System.out.println(resultado.getMensagemMascote());
+
+        if (resultado.getResultadoMascote() != null) {
+            System.out.println("Impacto do mascote:");
+            exibirDetalhesDoDano(alvo, resultado.getResultadoMascote());
+        }
+
+        System.out.println("Dano total combinado da jogada: " + resultado.getDanoTotal() + ".");
+        System.out.println("Energia restante do mascote: "
+                + resultado.getEnergiaRestanteMascote() + ".");
+        System.out.println();
+    }
+
+    /**
+     * Executa uma jogada em que apenas o mascote entra em ação.
+     */
+    private void executarUsoExclusivoDoMascote(Personagem ator, Personagem alvo,
+                                               boolean escolhaDoJogador) {
         ModoAjudaMascote modo = escolhaDoJogador
                 ? lerModoAjudaMascote()
                 : escolherModoAjudaDoInimigo(ator);
@@ -263,14 +278,14 @@ public class Batalha {
     }
 
     /**
-     * Lê o modo ofensivo ou defensivo da ajuda do mascote.
+     * Lê o tipo de ajuda quando somente o mascote será usado.
      */
     private ModoAjudaMascote lerModoAjudaMascote() {
         while (true) {
             for (ModoAjudaMascote modo : ModoAjudaMascote.values()) {
                 System.out.println(modo.getCodigo() + " - " + modo.getDescricao());
             }
-            System.out.print("Escolha como o mascote vai ajudar: ");
+            System.out.print("Escolha como o mascote vai agir: ");
 
             if (!scanner.hasNext()) {
                 System.out.println();
@@ -287,12 +302,44 @@ public class Batalha {
             } else if (scanner.hasNextLine()) {
                 scanner.nextLine();
             }
+
             System.out.println("Modo inválido. Escolha 1 ou 2.");
         }
     }
 
     /**
-     * Define se o inimigo usará mascote para atacar ou proteger.
+     * Executa a ação automática do adversário.
+     */
+    private void executarTurnoDoInimigo() {
+        AcaoBatalha acao = escolherAcaoInimiga();
+        System.out.println("O adversário se movimenta: " + inimigo.getNome() + ".");
+        processarAcao(inimigo, jogador, acao, false);
+    }
+
+    /**
+     * Seleciona a ação mais coerente para o adversário.
+     */
+    private AcaoBatalha escolherAcaoInimiga() {
+        if (inimigo.getVida() < 280 && inimigo.getMascote().podeAgir()) {
+            return AcaoBatalha.USAR_SOMENTE_MASCOTE;
+        }
+        if (inimigo.getMana() >= 40 && random.nextInt(100) < 30) {
+            return AcaoBatalha.HABILIDADE_ESPECIAL;
+        }
+        if (inimigo.getMascote().podeAtacarEmConjunto() && random.nextInt(100) < 20) {
+            return AcaoBatalha.ATAQUE_CONJUNTO;
+        }
+        if (random.nextInt(100) < 20) {
+            return AcaoBatalha.DEFENDER;
+        }
+        if (inimigo.getMascote().podeAgir() && random.nextInt(100) < 15) {
+            return AcaoBatalha.USAR_SOMENTE_MASCOTE;
+        }
+        return AcaoBatalha.ATACAR;
+    }
+
+    /**
+     * Define se o mascote do adversário vai atacar ou proteger.
      */
     private ModoAjudaMascote escolherModoAjudaDoInimigo(Personagem ator) {
         if (ator.getVida() < 350 || ator.getMana() < 40) {
@@ -318,7 +365,7 @@ public class Batalha {
     }
 
     /**
-     * Exibe os efeitos específicos da ajuda do mascote.
+     * Exibe os efeitos do uso exclusivo do mascote.
      */
     private void exibirDetalhesDoMascote(Personagem ator, Personagem alvo,
                                          ResultadoMascote resultado,
@@ -339,33 +386,9 @@ public class Batalha {
     }
 
     /**
-     * Exibe o estado do jogador logo após sua ação.
-     */
-    private void exibirResumoDaAcaoDoJogador() {
-        System.out.println("Resumo após a jogada do jogador:");
-        System.out.println(jogador.getResumoRodada());
-        System.out.println(inimigo.getResumoRodada());
-        System.out.println();
-    }
-
-    /**
-     * Fecha a rodada com um resumo compacto dos dois lados.
-     */
-    private void exibirResumoDaRodada(int turno) {
-        System.out.println("===== RESUMO DA RODADA " + turno + " =====");
-        System.out.println("Lado do jogador: " + jogador.getResumoRodada());
-        System.out.println("Lado adversário: " + inimigo.getResumoRodada());
-        System.out.println();
-    }
-
-    /**
-     * Permite que a mansão mal-assombrada interfira ao fim da rodada.
+     * Permite que a mansão interfira ao fim da rodada.
      */
     private void executarIntervencaoDaMansao() {
-        if (!jogador.estaVivo() || !inimigo.estaVivo()) {
-            return;
-        }
-
         ResultadoIntervencaoMansao resultado = intervencaoMansao.tentarInterferir(jogador, inimigo);
         if (!resultado.isOcorreu()) {
             return;
@@ -378,7 +401,50 @@ public class Batalha {
     }
 
     /**
-     * Apresenta o resultado final depois do encerramento da batalha.
+     * Exibe a tabela ASCII com o resultado acumulado da rodada.
+     */
+    private void exibirTabelaDaRodada(int turno) {
+        System.out.println("===== TABELA DA RODADA " + turno + " =====");
+        exibirBordaDaTabela();
+        exibirCabecalhoDaTabela();
+        exibirBordaDaTabela();
+        exibirLinhaDaTabela("Jogador", jogador);
+        exibirLinhaDaTabela("Adversário", inimigo);
+        exibirBordaDaTabela();
+        System.out.println();
+    }
+
+    /**
+     * Desenha a linha horizontal da tabela.
+     */
+    private void exibirBordaDaTabela() {
+        System.out.println("+--------------+------+-------+---------------+---------+------------------+"
+                + "------------------+------------------+---------------------+");
+    }
+
+    /**
+     * Desenha a linha de títulos da tabela de rodada.
+     */
+    private void exibirCabecalhoDaTabela() {
+        System.out.printf("| %-12s | %4s | %5s | %-13s | %7s | %-16s | %-16s | %-16s | %-19s |%n",
+                "Lado", "Vida", "Mana", "Energia Masc.", "Rodadas",
+                "Maior Dano Pers.", "Maior Bloq. Pers.",
+                "Maior Dano Masc.", "Maior Suporte Masc.");
+    }
+
+    /**
+     * Preenche a linha de um dos lados da tabela.
+     */
+    private void exibirLinhaDaTabela(String lado, Personagem personagem) {
+        System.out.printf("| %-12s | %4d | %5d | %13d | %7d | %16d | %16d | %16d | %19d |%n",
+                lado, personagem.getVida(), personagem.getMana(),
+                personagem.getMascote().getEnergia(), personagem.getRodadasParticipadas(),
+                personagem.getMaiorDanoPersonagem(), personagem.getMaiorBloqueioPersonagem(),
+                personagem.getMaiorDanoMascote(), personagem.getMaiorSuporteMascote());
+    }
+
+    /**
+     * Apresenta o resultado final da luta.
      */
     private void exibirResultadoFinal() {
         System.out.println("===== RESULTADO FINAL =====");
@@ -393,5 +459,6 @@ public class Batalha {
         jogador.exibirEstado();
         System.out.println();
         inimigo.exibirEstado();
+        System.out.println();
     }
 }

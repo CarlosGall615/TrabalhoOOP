@@ -44,6 +44,13 @@ public class Mascote {
     }
 
     /**
+     * Verifica se o mascote tem energia para participar de um ataque conjunto.
+     */
+    public boolean podeAtacarEmConjunto() {
+        return energia >= getCustoAtaqueConjunto();
+    }
+
+    /**
      * Executa a ajuda do mascote com ataque, defesa e recuperação.
      */
     public ResultadoMascote usarHabilidade(Personagem dono, Personagem alvo,
@@ -61,10 +68,38 @@ public class Mascote {
     }
 
     /**
+     * Executa um ataque em conjunto com custo menor que a ação solo.
+     */
+    public ResultadoDano executarAtaqueConjunto(Personagem alvo, Random random) {
+        if (!podeAtacarEmConjunto() || alvo == null || !alvo.estaVivo()) {
+            return null;
+        }
+
+        energia -= getCustoAtaqueConjunto();
+        int danoBase = Math.max(12, (tipo.getBonusAtaque() / 2) + random.nextInt(11));
+        return alvo.receberDanoDetalhado(danoBase);
+    }
+
+    /**
+     * Informa a participação do mascote no ataque conjunto.
+     */
+    public String getMensagemAtaqueConjunto() {
+        return tipo.getNomeExibicao() + " acompanhou o movimento com "
+                + tipo.getNomeHabilidade() + ".";
+    }
+
+    /**
      * Cria um retorno padronizado quando o mascote não consegue agir.
      */
     private ResultadoMascote criarResultadoSemAcao(String mensagem) {
         return new ResultadoMascote(mensagem, null, 0, 0, 0, energia);
+    }
+
+    /**
+     * Calcula o custo reduzido do ataque conjunto.
+     */
+    private int getCustoAtaqueConjunto() {
+        return Math.max(8, tipo.getCustoEnergia() - 6);
     }
 
     /**

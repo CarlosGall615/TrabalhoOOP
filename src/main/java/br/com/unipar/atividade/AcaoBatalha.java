@@ -8,8 +8,9 @@ public enum AcaoBatalha {
     ATACAR(1, "Atacar"),
     DEFENDER(2, "Defender"),
     HABILIDADE_ESPECIAL(3, "Usar habilidade especial"),
-    AJUDA_MASCOTE(4, "Pedir ajuda do mascote"),
-    EXIBIR_STATUS(5, "Exibir status");
+    ATAQUE_CONJUNTO(4, "Ataque conjunto com mascote"),
+    USAR_SOMENTE_MASCOTE(5, "Usar somente o mascote"),
+    EXIBIR_STATUS(6, "Exibir status");
 
     /**
      * Guarda o número digitado pelo usuário no menu.

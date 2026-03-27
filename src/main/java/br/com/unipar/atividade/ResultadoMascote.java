@@ -46,4 +46,22 @@ public class ResultadoMascote {
     public int getEnergiaRestante() {
         return energiaRestante;
     }
+
+    /**
+     * Retorna o impacto ofensivo do mascote em uma ação.
+     */
+    public int getDanoCausado() {
+        if (resultadoDano == null) {
+            return 0;
+        }
+        return resultadoDano.getDanoFinal();
+    }
+
+    /**
+     * Retorna o maior impacto defensivo ou de recuperação do mascote.
+     */
+    public int getImpactoSuporte() {
+        int maiorRecuperacao = Math.max(vidaRecuperada, manaRecuperada);
+        return Math.max(bonusDefesaAplicado, maiorRecuperacao);
+    }
 }

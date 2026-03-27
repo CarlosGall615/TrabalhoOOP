@@ -24,6 +24,8 @@ public class TesteSistema {
         testarReducaoDeVida();
         testarMorte();
         testarAjudaDoMascote();
+        testarAtaqueConjunto();
+        testarEstatisticasDaTabela();
         testarIntervencaoDaMansao();
         testarRetratosDaMansao();
         testarSelecaoDeInimigo();
@@ -105,6 +107,40 @@ public class TesteSistema {
         boolean registrouDano = resultado.getResultadoDano() != null;
         validar("Mascote participa da batalha", houveEfeito);
         validar("Mascote ofensivo registra dano", registrouDano);
+    }
+
+    /**
+     * Verifica se o ataque conjunto soma dano do personagem e do mascote.
+     */
+    private static void testarAtaqueConjunto() {
+        Personagem atacante = criarPersonagem(PersonagemBaseAddams.GOMEZ, TipoMascote.CORVO, 18);
+        Personagem alvo = criarPersonagem(PersonagemBaseAddams.MORTICIA, TipoMascote.GATO_PRETO, 19);
+        ResultadoAtaqueConjunto resultado = atacante.atacarComMascote(alvo);
+        boolean houveDanoDoPersonagem = resultado.getResultadoPersonagem().getDanoFinal() > 0;
+        boolean registrouTotal = resultado.getDanoTotal() >= resultado.getResultadoPersonagem().getDanoFinal();
+        validar("Ataque conjunto registra dano do personagem", houveDanoDoPersonagem);
+        validar("Ataque conjunto consolida dano total", registrouTotal);
+    }
+
+    /**
+     * Verifica se as estatísticas acumuladas são preenchidas.
+     */
+    private static void testarEstatisticasDaTabela() {
+        Personagem jogador = criarPersonagem(PersonagemBaseAddams.FEIOSO, TipoMascote.ARANHA, 20);
+        Personagem inimigo = criarPersonagem(PersonagemBaseAddams.TROPECO, TipoMascote.ABUTRE, 21);
+
+        jogador.registrarRodadaParticipada();
+        inimigo.registrarRodadaParticipada();
+        jogador.defender();
+        inimigo.executarAtaqueBasico(jogador);
+        jogador.pedirAjudaDoMascote(inimigo, ModoAjudaMascote.DEFENSIVO);
+
+        boolean rodadaRegistrada = jogador.getRodadasParticipadas() == 1;
+        boolean bloqueioRegistrado = jogador.getMaiorBloqueioPersonagem() > 0;
+        boolean suporteRegistrado = jogador.getMaiorSuporteMascote() > 0;
+        validar("Tabela registra quantidade de rodadas", rodadaRegistrada);
+        validar("Tabela registra maior bloqueio do personagem", bloqueioRegistrado);
+        validar("Tabela registra maior suporte do mascote", suporteRegistrado);
     }
 
     /**

@@ -61,6 +61,11 @@ public class Personagem {
      */
     private int bonusDefesaTemporario;
     private boolean defendendo;
+    private int rodadasParticipadas;
+    private int maiorDanoPersonagem;
+    private int maiorBloqueioPersonagem;
+    private int maiorDanoMascote;
+    private int maiorSuporteMascote;
 
     public Personagem(PersonagemBaseAddams base, Mascote mascote, Random random) {
         validarMascote(base, mascote);
@@ -96,6 +101,11 @@ public class Personagem {
         this.nivel = base.getNivel();
         this.bonusDefesaTemporario = 0;
         this.defendendo = false;
+        this.rodadasParticipadas = 0;
+        this.maiorDanoPersonagem = 0;
+        this.maiorBloqueioPersonagem = 0;
+        this.maiorDanoMascote = 0;
+        this.maiorSuporteMascote = 0;
     }
 
     public PersonagemBaseAddams getBase() {
@@ -146,6 +156,26 @@ public class Personagem {
         return defendendo;
     }
 
+    public int getRodadasParticipadas() {
+        return rodadasParticipadas;
+    }
+
+    public int getMaiorDanoPersonagem() {
+        return maiorDanoPersonagem;
+    }
+
+    public int getMaiorBloqueioPersonagem() {
+        return maiorBloqueioPersonagem;
+    }
+
+    public int getMaiorDanoMascote() {
+        return maiorDanoMascote;
+    }
+
+    public int getMaiorSuporteMascote() {
+        return maiorSuporteMascote;
+    }
+
     /**
      * Indica se o personagem ainda pode participar da batalha.
      */
@@ -163,6 +193,16 @@ public class Personagem {
 
         defendendo = false;
         return forca + random.nextInt(31);
+    }
+
+    /**
+     * Executa o ataque básico e registra o maior dano do personagem.
+     */
+    public ResultadoDano executarAtaqueBasico(Personagem alvo) {
+        int danoBruto = atacar();
+        ResultadoDano resultado = alvo.receberDanoDetalhado(danoBruto);
+        registrarMaiorDanoPersonagem(resultado.getDanoFinal());
+        return resultado;
     }
 
     /**
@@ -191,6 +231,7 @@ public class Personagem {
         ResultadoDano resultadoDano = alvo.receberDanoDetalhado(danoBase);
 
         aplicarBonusDefesa(base.getBonusDefesaHabilidade());
+        registrarMaiorDanoPersonagem(resultadoDano.getDanoFinal());
         return new ResultadoHabilidade(true, habilidadeExclusiva, resultadoDano,
                 vidaRecuperada, base.getBonusDefesaHabilidade(), mana);
     }
@@ -211,7 +252,38 @@ public class Personagem {
                     null, 0, 0, 0, mascote.getEnergia());
         }
 
-        return mascote.usarHabilidade(this, alvo, random, modo);
+        ResultadoMascote resultado = mascote.usarHabilidade(this, alvo, random, modo);
+        registrarImpactoDoMascote(resultado);
+        return resultado;
+    }
+
+    /**
+     * Executa uma jogada em conjunto entre personagem e mascote.
+     */
+    public ResultadoAtaqueConjunto atacarComMascote(Personagem alvo) {
+        ResultadoDano resultadoPersonagem = executarAtaqueBasico(alvo);
+        ResultadoDano resultadoMascote = null;
+        String mensagemMascote = "";
+
+        if (!alvo.estaVivo()) {
+            mensagemMascote = mascote.getTipo().getNomeExibicao()
+                    + " não precisou agir porque o golpe principal encerrou a jogada.";
+        } else if (!mascote.podeAtacarEmConjunto()) {
+            mensagemMascote = mascote.getTipo().getNomeExibicao()
+                    + " estava sem energia para acompanhar o ataque.";
+        } else {
+            resultadoMascote = mascote.executarAtaqueConjunto(alvo, random);
+            registrarMaiorDanoMascote(resultadoMascote.getDanoFinal());
+            mensagemMascote = mascote.getMensagemAtaqueConjunto();
+        }
+
+        int danoTotal = resultadoPersonagem.getDanoFinal();
+        if (resultadoMascote != null) {
+            danoTotal += resultadoMascote.getDanoFinal();
+        }
+
+        return new ResultadoAtaqueConjunto(resultadoPersonagem, resultadoMascote,
+                mensagemMascote, danoTotal, mascote.getEnergia());
     }
 
     /**
@@ -237,6 +309,7 @@ public class Personagem {
             danoFinal = 0;
         }
 
+        registrarMaiorBloqueioPersonagem(Math.min(danoBruto, defesaTotal));
         vida -= danoFinal;
         if (vida < 0) {
             vida = 0;
@@ -340,11 +413,62 @@ public class Personagem {
     }
 
     /**
+     * Registra que o personagem participou de mais uma rodada.
+     */
+    public void registrarRodadaParticipada() {
+        rodadasParticipadas++;
+    }
+
+    /**
      * Remove efeitos defensivos temporários após o turno ou impacto.
      */
     private void limparDefesaTemporaria() {
         defendendo = false;
         bonusDefesaTemporario = 0;
+    }
+
+    /**
+     * Atualiza a maior marca ofensiva do personagem.
+     */
+    private void registrarMaiorDanoPersonagem(int dano) {
+        if (dano > maiorDanoPersonagem) {
+            maiorDanoPersonagem = dano;
+        }
+    }
+
+    /**
+     * Atualiza a maior marca defensiva do personagem.
+     */
+    private void registrarMaiorBloqueioPersonagem(int bloqueio) {
+        if (bloqueio > maiorBloqueioPersonagem) {
+            maiorBloqueioPersonagem = bloqueio;
+        }
+    }
+
+    /**
+     * Atualiza a maior marca ofensiva do mascote.
+     */
+    private void registrarMaiorDanoMascote(int dano) {
+        if (dano > maiorDanoMascote) {
+            maiorDanoMascote = dano;
+        }
+    }
+
+    /**
+     * Atualiza a maior marca de suporte do mascote.
+     */
+    private void registrarMaiorSuporteMascote(int suporte) {
+        if (suporte > maiorSuporteMascote) {
+            maiorSuporteMascote = suporte;
+        }
+    }
+
+    /**
+     * Consolida o impacto do mascote após uma ação solo.
+     */
+    private void registrarImpactoDoMascote(ResultadoMascote resultado) {
+        registrarMaiorDanoMascote(resultado.getDanoCausado());
+        registrarMaiorSuporteMascote(resultado.getImpactoSuporte());
     }
 
     /**

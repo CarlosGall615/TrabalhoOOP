@@ -16,6 +16,23 @@ public class Main {
         Locale.setDefault(Locale.forLanguageTag("pt-BR"));
         Scanner scanner = new Scanner(System.in);
         Random random = new Random();
+
+        while (true) {
+            executarPartida(scanner, random);
+            if (!perguntarNovaLuta(scanner)) {
+                break;
+            }
+        }
+
+        System.out.println();
+        System.out.println("A mansão voltou ao silêncio. Até a próxima batalha.");
+        scanner.close();
+    }
+
+    /**
+     * Executa uma luta completa do início ao fim.
+     */
+    private static void executarPartida(Scanner scanner, Random random) {
         GeradorPersonagem gerador = new GeradorPersonagem(random);
 
         apresentarJogo();
@@ -27,7 +44,6 @@ public class Main {
 
         exibirEscolhasIniciais(jogador, inimigo);
         new Batalha(jogador, inimigo, scanner, random).iniciar();
-        scanner.close();
     }
 
     /**
@@ -82,5 +98,33 @@ public class Main {
         System.out.println("O adversário sorteado foi " + inimigo.getNome() + ".");
         System.out.println("A batalha começará com 1000 pontos de vida para cada lado.");
         System.out.println();
+    }
+
+    /**
+     * Pergunta ao usuário se deseja iniciar uma nova luta.
+     */
+    private static boolean perguntarNovaLuta(Scanner scanner) {
+        while (true) {
+            System.out.print("Deseja iniciar uma nova luta? (S/N): ");
+
+            if (!scanner.hasNext()) {
+                System.out.println();
+                return false;
+            }
+
+            String resposta = scanner.next().trim().toUpperCase(Locale.ROOT);
+            if (scanner.hasNextLine()) {
+                scanner.nextLine();
+            }
+            if ("S".equals(resposta)) {
+                System.out.println();
+                return true;
+            }
+            if ("N".equals(resposta)) {
+                return false;
+            }
+
+            System.out.println("Resposta inválida. Digite S para sim ou N para não.");
+        }
     }
 }
