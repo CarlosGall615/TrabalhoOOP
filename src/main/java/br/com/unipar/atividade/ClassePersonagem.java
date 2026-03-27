@@ -1,61 +1,91 @@
 package br.com.unipar.atividade;
 
+/**
+ * Define os tipos narrativos inspirados na Família Addams.
+ */
 public enum ClassePersonagem {
 
-    // As classes foram pensadas com base no papel de cada figura dentro do universo Addams.
-    PATRIARCA_DA_MANSAO("Patriarca da Mansão", 135, 24, 16,
-            "Representa a liderança apaixonada e impulsiva da família."),
-    DAMA_DA_ELEGANCIA_SOMBRIA("Dama da Elegância Sombria", 128, 22, 18,
-            "Simboliza presença marcante, serenidade e controle da mansão."),
-    HERDEIRA_DO_MACABRO("Herdeira do Macabro", 118, 27, 13,
-            "Une inteligência fria, ironia e precisão sombria."),
-    ARTILHEIRO_DO_CAOS_CASEIRO("Artilheiro do Caos Caseiro", 126, 25, 14,
-            "Representa travessuras explosivas e energia imprevisível."),
-    CIENTISTA_DAS_ENGRENAGENS("Cientista das Engrenagens", 122, 23, 15,
-            "Reúne invenção, eletricidade e criatividade excêntrica."),
-    MATRIARCA_DAS_RECEITAS_OCULTAS("Matriarca das Receitas Ocultas", 132, 21, 19,
-            "Expressa sabedoria antiga, poções e tradição misteriosa."),
-    SENTINELA_DA_PORTA("Sentinela da Porta", 145, 20, 21,
-            "Representa proteção silenciosa, força e lealdade à casa."),
-    NOBRE_DO_CAOS_CABELUDO("Nobre do Caos Cabeludo", 124, 24, 15,
-            "Transforma extravagância e surpresa em vantagem na batalha.");
+    PATRIARCA_SOMBRIO("Patriarca Sombrio",
+            "Lidera a família com ousadia e presença ofensiva.",
+            new TipoMascote[]{TipoMascote.MORCEGO, TipoMascote.CORVO}),
+    DAMA_MACABRA("Dama Macabra",
+            "Combina elegância, controle emocional e estratégia.",
+            new TipoMascote[]{TipoMascote.CORUJA_SOMBRIA, TipoMascote.GATO_PRETO}),
+    HERDEIRA_SOMBRIA("Herdeira Sombria",
+            "Prefere precisão, sangue-frio e ataques diretos.",
+            new TipoMascote[]{TipoMascote.ARANHA, TipoMascote.ESCORPIAO}),
+    TRAVESSO_DO_CAOS("Travesso do Caos",
+            "Usa truques, improviso e pressão constante.",
+            new TipoMascote[]{TipoMascote.ARANHA, TipoMascote.MORCEGO}),
+    TIO_EXCENTRICO("Tio Excêntrico",
+            "Transforma engenhocas estranhas em vantagem no combate.",
+            new TipoMascote[]{TipoMascote.SERPENTE, TipoMascote.CORVO}),
+    CRIATURA_LEAL("Criatura Leal",
+            "Resiste mais que os outros e protege a casa com firmeza.",
+            new TipoMascote[]{TipoMascote.ABUTRE, TipoMascote.CORUJA_SOMBRIA}),
+    MENSAGEIRO_SORRATEIRO("Mensageiro Sorrateiro",
+            "É rápido, discreto e confunde o oponente.",
+            new TipoMascote[]{TipoMascote.ESCORPIAO, TipoMascote.SERPENTE});
 
+    /**
+     * Texto exibido ao jogador no menu e no status.
+     */
     private final String descricao;
-    private final int vidaBase;
-    private final int forcaBase;
-    private final int defesaBase;
-    private final String contextoNarrativo;
 
-    ClassePersonagem(String descricao, int vidaBase, int forcaBase, int defesaBase, String contextoNarrativo) {
+    /**
+     * Explicação resumida do papel narrativo da classe.
+     */
+    private final String papelNarrativo;
+
+    /**
+     * Lista fixa de mascotes que podem ser usados por essa classe.
+     */
+    private final TipoMascote[] mascotesPermitidos;
+
+    ClassePersonagem(String descricao, String papelNarrativo,
+                     TipoMascote[] mascotesPermitidos) {
         this.descricao = descricao;
-        this.vidaBase = vidaBase;
-        this.forcaBase = forcaBase;
-        this.defesaBase = defesaBase;
-        this.contextoNarrativo = contextoNarrativo;
+        this.papelNarrativo = papelNarrativo;
+        this.mascotesPermitidos = mascotesPermitidos;
     }
 
     public String getDescricao() {
         return descricao;
     }
 
-    public int getVidaBase() {
-        return vidaBase;
+    public String getPapelNarrativo() {
+        return papelNarrativo;
     }
 
-    public int getForcaBase() {
-        return forcaBase;
+    public TipoMascote[] getMascotesPermitidos() {
+        return mascotesPermitidos.clone();
     }
 
-    public int getDefesaBase() {
-        return defesaBase;
+    /**
+     * Valida se o mascote escolhido é compatível com a classe.
+     */
+    public boolean aceitaMascote(TipoMascote tipoMascote) {
+        for (TipoMascote permitido : mascotesPermitidos) {
+            if (permitido == tipoMascote) {
+                return true;
+            }
+        }
+        return false;
     }
 
-    public String getContextoNarrativo() {
-        return contextoNarrativo;
-    }
+    /**
+     * Monta a lista de mascotes permitidos em formato amigável.
+     */
+    public String listarMascotesPermitidos() {
+        StringBuilder texto = new StringBuilder();
 
-    @Override
-    public String toString() {
-        return descricao;
+        for (int i = 0; i < mascotesPermitidos.length; i++) {
+            if (i > 0) {
+                texto.append(", ");
+            }
+            texto.append(mascotesPermitidos[i].getNomeExibicao());
+        }
+
+        return texto.toString();
     }
 }

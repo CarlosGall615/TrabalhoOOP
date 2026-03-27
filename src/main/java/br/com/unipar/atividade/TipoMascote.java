@@ -1,58 +1,86 @@
 package br.com.unipar.atividade;
 
+/**
+ * Enum com os mascotes temáticos permitidos no universo do jogo.
+ */
 public enum TipoMascote {
 
-    // Cada mascote tem atributos completos para demonstrar melhor a interação entre objetos.
-    MORCEGO_DUQUE("Morcego Duque", "Rasante Aristocrático", 42, 8, 4, 2, 2, 12, 10, 16, 2),
-    CORVO_OFELIA("Corvo Ofélia", "Asas de Veludo", 44, 9, 3, 3, 1, 10, 12, 15, 3),
-    ARANHA_NERO("Aranha Nero", "Teia Venenosa", 38, 7, 5, 1, 3, 11, 9, 18, 1),
-    POLVO_ARISTOTELES("Polvo Aristóteles", "Combo de Tentáculos", 48, 10, 4, 2, 2, 13, 8, 17, 2),
-    ENGUIA_VOLTAICA("Enguia Voltaica", "Descarga do Subsolo", 40, 6, 5, 1, 3, 12, 11, 19, 1),
-    GATO_ESMERALDA("Gato Esmeralda", "Miado Arcano", 46, 11, 2, 4, 1, 9, 13, 14, 4),
-    CAO_SOMBRIO("Cão Sombrio", "Investida do Guardião", 52, 12, 4, 3, 1, 14, 8, 16, 2),
-    DONINHA_LUXO("Doninha de Luxo", "Giro Desconcertante", 41, 8, 3, 2, 4, 10, 10, 15, 2);
+    CORVO("Corvo", "Rasante Sombrio", 55, 10, 0, 10, 20,
+            "Ataca do alto e ajuda o dono a enxergar oportunidades."),
+    ARANHA("Aranha", "Teia de Proteção", 35, 30, 0, 0, 18,
+            "Cria uma defesa extra e atrapalha a aproximação do rival."),
+    MORCEGO("Morcego", "Voo Intimidador", 45, 15, 0, 15, 20,
+            "Ataca em rasante e renova a coragem do personagem."),
+    GATO_PRETO("Gato Preto", "Passo Silencioso", 20, 10, 45, 20, 18,
+            "Recupera vida e mana com discrição elegante."),
+    ABUTRE("Abutre", "Investida do Céu", 60, 20, 0, 0, 22,
+            "Golpeia com força e abre espaço para um novo ataque."),
+    SERPENTE("Serpente", "Bote Preciso", 50, 10, 0, 20, 20,
+            "Ataca rápido e ajuda a recuperar o foco do dono."),
+    ESCORPIAO("Escorpião", "Ferroada Cruel", 65, 5, 0, 0, 22,
+            "É agressivo e causa grande impacto em um único lance."),
+    CORUJA_SOMBRIA("Coruja Sombria", "Guia da Noite", 30, 20, 20, 25, 18,
+            "Equilibra proteção, recuperação e ataque leve.");
 
+    /**
+     * Nome amigável apresentado no console.
+     */
     private final String nomeExibicao;
-    private final String nomeSkill;
-    private final int vidaBase;
-    private final int armaduraBase;
-    private final int bonusAtaque;
-    private final int bonusDefesa;
-    private final int comboInicial;
-    private final int vigorBase;
-    private final int manaBase;
-    private final int poderSkill;
-    private final int curaAoDono;
 
-    TipoMascote(String nomeExibicao, String nomeSkill, int vidaBase, int armaduraBase, int bonusAtaque,
-                int bonusDefesa, int comboInicial, int vigorBase, int manaBase, int poderSkill, int curaAoDono) {
+    /**
+     * Nome da habilidade exclusiva do mascote.
+     */
+    private final String nomeHabilidade;
+
+    /**
+     * Valor bruto de ataque causado pelo mascote.
+     */
+    private final int bonusAtaque;
+
+    /**
+     * Valor de defesa temporária concedido ao dono.
+     */
+    private final int bonusDefesa;
+
+    /**
+     * Quantidade de vida restaurada ao dono.
+     */
+    private final int recuperacaoVida;
+
+    /**
+     * Quantidade de mana restaurada ao dono.
+     */
+    private final int recuperacaoMana;
+
+    /**
+     * Custo de energia do mascote para agir.
+     */
+    private final int custoEnergia;
+
+    /**
+     * Texto didático sobre o papel do mascote.
+     */
+    private final String descricao;
+
+    TipoMascote(String nomeExibicao, String nomeHabilidade, int bonusAtaque,
+                int bonusDefesa, int recuperacaoVida, int recuperacaoMana,
+                int custoEnergia, String descricao) {
         this.nomeExibicao = nomeExibicao;
-        this.nomeSkill = nomeSkill;
-        this.vidaBase = vidaBase;
-        this.armaduraBase = armaduraBase;
+        this.nomeHabilidade = nomeHabilidade;
         this.bonusAtaque = bonusAtaque;
         this.bonusDefesa = bonusDefesa;
-        this.comboInicial = comboInicial;
-        this.vigorBase = vigorBase;
-        this.manaBase = manaBase;
-        this.poderSkill = poderSkill;
-        this.curaAoDono = curaAoDono;
+        this.recuperacaoVida = recuperacaoVida;
+        this.recuperacaoMana = recuperacaoMana;
+        this.custoEnergia = custoEnergia;
+        this.descricao = descricao;
     }
 
     public String getNomeExibicao() {
         return nomeExibicao;
     }
 
-    public String getNomeSkill() {
-        return nomeSkill;
-    }
-
-    public int getVidaBase() {
-        return vidaBase;
-    }
-
-    public int getArmaduraBase() {
-        return armaduraBase;
+    public String getNomeHabilidade() {
+        return nomeHabilidade;
     }
 
     public int getBonusAtaque() {
@@ -63,23 +91,19 @@ public enum TipoMascote {
         return bonusDefesa;
     }
 
-    public int getComboInicial() {
-        return comboInicial;
+    public int getRecuperacaoVida() {
+        return recuperacaoVida;
     }
 
-    public int getVigorBase() {
-        return vigorBase;
+    public int getRecuperacaoMana() {
+        return recuperacaoMana;
     }
 
-    public int getManaBase() {
-        return manaBase;
+    public int getCustoEnergia() {
+        return custoEnergia;
     }
 
-    public int getPoderSkill() {
-        return poderSkill;
-    }
-
-    public int getCuraAoDono() {
-        return curaAoDono;
+    public String getDescricao() {
+        return descricao;
     }
 }

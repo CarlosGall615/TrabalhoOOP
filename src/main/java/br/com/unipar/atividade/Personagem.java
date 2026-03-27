@@ -2,63 +2,112 @@ package br.com.unipar.atividade;
 
 import java.util.Random;
 
+/**
+ * Representa um personagem jogável com encapsulamento e comportamento próprio.
+ */
 public class Personagem {
 
-    // O personagem agora nasce a partir de uma identidade fixa da família e do seu mascote oficial.
+    /**
+     * Vida padrão exigida no enunciado do trabalho.
+     */
+    private static final int VIDA_INICIAL = 1000;
+
+    /**
+     * Base fixa do personagem escolhida no catálogo Addams.
+     */
     private final PersonagemBaseAddams base;
+
+    /**
+     * Nome exibido no console.
+     */
     private final String nome;
+
+    /**
+     * Classe narrativa inspirada no universo da Família Addams.
+     */
     private final ClassePersonagem classePersonagem;
+
+    /**
+     * Roupa ou armadura que compõe a identidade do personagem.
+     */
+    private final String armaduraRoupa;
+
+    /**
+     * Nome da habilidade exclusiva do personagem.
+     */
+    private final String habilidadeExclusiva;
+
+    /**
+     * Mascote associado ao personagem.
+     */
     private final Mascote mascote;
+
+    /**
+     * Gerador aleatório usado para pequenas variações do combate.
+     */
     private final Random random;
 
-    private int nivel;
-    private int vidaMaxima;
-    private int vidaAtual;
+    /**
+     * Estado de vida, força, defesa, mana e nível do personagem.
+     */
+    private int vida;
     private int forca;
     private int defesa;
-    private int defesaTemporaria;
+    private int mana;
+    private int nivel;
 
-    public Personagem(PersonagemBaseAddams base, int nivel, Random random) {
+    /**
+     * Bônus temporários aplicados por defesa ou mascote.
+     */
+    private int bonusDefesaTemporario;
+    private boolean defendendo;
+
+    public Personagem(PersonagemBaseAddams base, Mascote mascote, Random random) {
+        validarMascote(base, mascote);
         this.base = base;
-        this.nome = base.getNomeExibicao();
+        this.nome = base.getNome();
         this.classePersonagem = base.getClassePersonagem();
-        this.mascote = new Mascote(base.getTipoMascote());
-        this.nivel = nivel;
+        this.armaduraRoupa = base.getArmaduraRoupa();
+        this.habilidadeExclusiva = base.getHabilidadeExclusiva();
+        this.mascote = mascote;
         this.random = random;
-
-        this.vidaMaxima = classePersonagem.getVidaBase() + base.getBonusVida() + (nivel * 4);
-        this.vidaAtual = vidaMaxima;
-        this.forca = classePersonagem.getForcaBase() + base.getBonusForca() + nivel;
-        this.defesa = classePersonagem.getDefesaBase() + base.getBonusDefesa() + nivel;
-        this.defesaTemporaria = 0;
+        carregarAtributosBase();
     }
 
-    public String getNome() {
-        return nome;
+    /**
+     * Garante a compatibilidade entre classe narrativa e mascote.
+     */
+    private void validarMascote(PersonagemBaseAddams base, Mascote mascote) {
+        if (base.getClassePersonagem().aceitaMascote(mascote.getTipo())) {
+            return;
+        }
+
+        throw new IllegalArgumentException("Mascote incompatível com a classe do personagem.");
+    }
+
+    /**
+     * Copia os atributos fixos do catálogo para o objeto criado.
+     */
+    private void carregarAtributosBase() {
+        this.vida = VIDA_INICIAL;
+        this.forca = base.getForca();
+        this.defesa = base.getDefesa();
+        this.mana = base.getMana();
+        this.nivel = base.getNivel();
+        this.bonusDefesaTemporario = 0;
+        this.defendendo = false;
     }
 
     public PersonagemBaseAddams getBase() {
         return base;
     }
 
-    public ClassePersonagem getClassePersonagem() {
-        return classePersonagem;
+    public String getNome() {
+        return nome;
     }
 
-    public Mascote getMascote() {
-        return mascote;
-    }
-
-    public int getNivel() {
-        return nivel;
-    }
-
-    public int getVidaMaxima() {
-        return vidaMaxima;
-    }
-
-    public int getVidaAtual() {
-        return vidaAtual;
+    public int getVida() {
+        return vida;
     }
 
     public int getForca() {
@@ -69,98 +118,268 @@ public class Personagem {
         return defesa;
     }
 
+    public int getMana() {
+        return mana;
+    }
+
+    public int getNivel() {
+        return nivel;
+    }
+
+    public String getArmaduraRoupa() {
+        return armaduraRoupa;
+    }
+
+    public String getHabilidadeExclusiva() {
+        return habilidadeExclusiva;
+    }
+
+    public Mascote getMascote() {
+        return mascote;
+    }
+
+    public int getBonusDefesaTemporario() {
+        return bonusDefesaTemporario;
+    }
+
+    public boolean isDefendendo() {
+        return defendendo;
+    }
+
+    /**
+     * Indica se o personagem ainda pode participar da batalha.
+     */
     public boolean estaVivo() {
-        return vidaAtual > 0;
+        return vida > 0;
     }
 
-    public int atacar(CenarioCasa cenario) {
-        int variacao = random.nextInt(5);
-        int bonusMascote = mascote.apoiarAtaque();
-        int danoTotal = forca + variacao + bonusMascote + cenario.getBonusAtaque();
-
-        if (danoTotal < 1) {
-            danoTotal = 1;
+    /**
+     * Executa o ataque básico usando a força como base do dano.
+     */
+    public int atacar() {
+        if (!estaVivo()) {
+            return 0;
         }
 
-        System.out.println(nome + " realizou um ataque direto.");
-        System.out.println("O mascote " + mascote.getTipo().getNomeExibicao() + " aumentou o dano em +" + bonusMascote + ".");
-        return danoTotal;
+        defendendo = false;
+        return forca + random.nextInt(31);
     }
 
-    public void prepararDefesa() {
-        defesaTemporaria = 6;
-        System.out.println(nome + " reforçou a guarda e vai receber melhor a próxima investida.");
+    /**
+     * Ativa um estado defensivo para reduzir o próximo dano recebido.
+     */
+    public void defender() {
+        defendendo = true;
+        bonusDefesaTemporario += 35;
     }
 
-    public boolean usarSkillDoMascote(Personagem alvo, CenarioCasa cenario) {
-        if (!mascote.podeUsarSkill()) {
-            System.out.println("O mascote de " + nome + " não possui vigor e mana suficientes para a skill.");
-            return false;
+    /**
+     * Usa a habilidade exclusiva do personagem, consumindo mana.
+     */
+    public ResultadoHabilidade usarHabilidadeEspecial(Personagem alvo) {
+        if (!estaVivo()) {
+            return criarFalhaHabilidade(nome + " já foi derrotado e não pode mais agir.");
+        }
+        if (mana < base.getCustoHabilidade()) {
+            return criarFalhaHabilidade(nome + " está sem mana suficiente para usar "
+                    + habilidadeExclusiva + ".");
         }
 
-        int danoSkill = mascote.usarSkillEspecial() + (cenario.getBonusAtaque() / 2);
-        int cura = mascote.aplicarCuraAoDono();
+        mana -= base.getCustoHabilidade();
+        int danoBase = forca + base.getBonusDanoHabilidade() + random.nextInt(21);
+        int vidaRecuperada = recuperarVida(base.getCuraHabilidade());
+        ResultadoDano resultadoDano = alvo.receberDanoDetalhado(danoBase);
 
-        System.out.println("O mascote " + mascote.getTipo().getNomeExibicao()
-                + " usou a skill " + mascote.getTipo().getNomeSkill() + ".");
-        alvo.receberDano(danoSkill, cenario, "skill do mascote de " + nome);
-        recuperarVida(cura);
-
-        if (cura > 0) {
-            System.out.println(nome + " recuperou " + cura + " pontos de vida com o apoio do mascote.");
-        }
-
-        return true;
+        aplicarBonusDefesa(base.getBonusDefesaHabilidade());
+        return new ResultadoHabilidade(true, habilidadeExclusiva, resultadoDano,
+                vidaRecuperada, base.getBonusDefesaHabilidade(), mana);
     }
 
-    public void receberDano(int danoRecebido, CenarioCasa cenario, String origem) {
-        int defesaTotal = defesa + defesaTemporaria + mascote.apoiarDefesa() + cenario.getBonusDefesa();
-        int danoFinal = danoRecebido - defesaTotal;
+    /**
+     * Cria um retorno padronizado para falhas de uso da habilidade.
+     */
+    private ResultadoHabilidade criarFalhaHabilidade(String mensagem) {
+        return new ResultadoHabilidade(false, mensagem, null, 0, 0, mana);
+    }
 
+    /**
+     * Delega ao mascote uma ação de suporte ou ataque.
+     */
+    public ResultadoMascote pedirAjudaDoMascote(Personagem alvo, ModoAjudaMascote modo) {
+        if (!estaVivo()) {
+            return new ResultadoMascote(nome + " foi derrotado e não consegue chamar o mascote.",
+                    null, 0, 0, 0, mascote.getEnergia());
+        }
+
+        return mascote.usarHabilidade(this, alvo, random, modo);
+    }
+
+    /**
+     * Calcula o dano final depois da defesa do personagem.
+     */
+    public int receberDano(int danoBruto) {
+        return receberDanoDetalhado(danoBruto).getDanoFinal();
+    }
+
+    /**
+     * Calcula o dano e devolve detalhes para a narração do combate.
+     */
+    public ResultadoDano receberDanoDetalhado(int danoBruto) {
+        int bonusDefesa = calcularBonusDefesaTotal();
+        int defesaTotal = defesa + bonusDefesaTemporario;
+
+        if (defendendo) {
+            defesaTotal += 20;
+        }
+
+        int danoFinal = danoBruto - defesaTotal;
         if (danoFinal < 0) {
             danoFinal = 0;
         }
 
-        vidaAtual -= danoFinal;
-        if (vidaAtual < 0) {
-            vidaAtual = 0;
+        vida -= danoFinal;
+        if (vida < 0) {
+            vida = 0;
         }
 
-        mascote.absorverImpacto(danoRecebido);
-
-        System.out.println(nome + " sofreu um ataque vindo de " + origem + ".");
-        System.out.println("Dano final recebido: " + danoFinal + ".");
-        System.out.println("Vida atual: " + vidaAtual + "/" + vidaMaxima + ".");
-
-        defesaTemporaria = 0;
+        limparDefesaTemporaria();
+        return new ResultadoDano(danoBruto, defesa, bonusDefesa, danoFinal, vida);
     }
 
-    public void descansarComMascote() {
-        recuperarVida(4);
-        mascote.recuperarEntreTurnos();
-        System.out.println(nome + " respirou fundo e reorganizou forças com o mascote.");
+    /**
+     * Soma todos os bônus defensivos ativos no personagem.
+     */
+    private int calcularBonusDefesaTotal() {
+        int bonusDefesa = bonusDefesaTemporario;
+
+        if (defendendo) {
+            bonusDefesa += 20;
+        }
+
+        return bonusDefesa;
     }
 
-    public void finalizarTurno() {
-        mascote.recuperarEntreTurnos();
-    }
-
-    public void recuperarVida(int valor) {
-        vidaAtual += valor;
-        if (vidaAtual > vidaMaxima) {
-            vidaAtual = vidaMaxima;
+    /**
+     * Adiciona um bônus de defesa usado por mascotes e habilidades.
+     */
+    public void aplicarBonusDefesa(int valor) {
+        if (valor > 0) {
+            bonusDefesaTemporario += valor;
         }
     }
 
+    /**
+     * Recupera vida sem ultrapassar o limite máximo do personagem.
+     */
+    public int recuperarVida(int valor) {
+        if (valor <= 0) {
+            return 0;
+        }
+
+        int vidaAnterior = vida;
+        vida += valor;
+        if (vida > VIDA_INICIAL) {
+            vida = VIDA_INICIAL;
+        }
+        return vida - vidaAnterior;
+    }
+
+    /**
+     * Recupera mana sem ultrapassar o valor inicial do personagem.
+     */
+    public int recuperarMana(int valor) {
+        if (valor <= 0) {
+            return 0;
+        }
+
+        int manaAnterior = mana;
+        mana += valor;
+        if (mana > base.getMana()) {
+            mana = base.getMana();
+        }
+        return mana - manaAnterior;
+    }
+
+    /**
+     * Reduz mana sem permitir que o valor fique negativo.
+     */
+    public int reduzirMana(int valor) {
+        if (valor <= 0) {
+            return 0;
+        }
+
+        int manaAnterior = mana;
+        mana -= valor;
+        if (mana < 0) {
+            mana = 0;
+        }
+        return manaAnterior - mana;
+    }
+
+    /**
+     * Remove toda a defesa temporária ativa do personagem.
+     */
+    public int removerDefesaTemporaria() {
+        int defesaRemovida = bonusDefesaTemporario;
+
+        if (defendendo) {
+            defesaRemovida += 20;
+        }
+
+        limparDefesaTemporaria();
+        return defesaRemovida;
+    }
+
+    /**
+     * Encerra o turno e renova um pouco da mana e da energia do mascote.
+     */
+    public void prepararProximoTurno() {
+        limparDefesaTemporaria();
+        recuperarMana(10);
+        mascote.recuperarEnergia();
+    }
+
+    /**
+     * Remove efeitos defensivos temporários após o turno ou impacto.
+     */
+    private void limparDefesaTemporaria() {
+        defendendo = false;
+        bonusDefesaTemporario = 0;
+    }
+
+    /**
+     * Exibe todos os atributos obrigatórios do personagem no console.
+     */
     public void exibirEstado() {
-        System.out.println("Personagem: " + nome);
-        System.out.println("Classe da história: " + classePersonagem.getDescricao());
-        System.out.println("Contexto: " + classePersonagem.getContextoNarrativo());
-        System.out.println("Perfil: " + base.getDescricao());
-        System.out.println("Nível: " + nivel);
-        System.out.println("Vida: " + vidaAtual + "/" + vidaMaxima);
-        System.out.println("Força: " + forca);
-        System.out.println("Defesa: " + defesa);
-        System.out.println("Mascote oficial: " + mascote.getResumoAcademico());
+        System.out.println(getResumoStatus());
+        System.out.println("Mascote: " + mascote.getResumo());
+        System.out.println("Classe: " + classePersonagem.getDescricao());
+        System.out.println("Tipo narrativo: " + classePersonagem.getPapelNarrativo());
+        System.out.println("Armadura/Roupa: " + armaduraRoupa);
+        System.out.println("Habilidade exclusiva: " + habilidadeExclusiva);
+    }
+
+    /**
+     * Resume o estado principal do personagem para menus e testes.
+     */
+    public String getResumoStatus() {
+        return nome
+                + " | Vida: " + vida
+                + " | Força: " + forca
+                + " | Defesa: " + defesa
+                + " | Mana: " + mana
+                + " | Nível: " + nivel;
+    }
+
+    /**
+     * Resume os dados de fim de rodada de forma compacta.
+     */
+    public String getResumoRodada() {
+        return nome
+                + " | Vida: " + vida
+                + " | Mana: " + mana
+                + " | Defesa temporária: " + bonusDefesaTemporario
+                + " | Postura defensiva: " + (defendendo ? "ativa" : "inativa")
+                + " | Energia do mascote: " + mascote.getEnergia();
     }
 }
